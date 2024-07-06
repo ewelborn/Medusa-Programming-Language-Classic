@@ -146,6 +146,9 @@ fn medusa_string_to_int(context: &mut CompilerContext) {
     let break_index = context.label_index;
     context.label_index += 1;
 
+    let finished_index = context.label_index;
+    context.label_index += 1;
+
     context.assembly_text += format!("
 ; Pop the string into RAX
 pop rax
@@ -158,12 +161,21 @@ xor rcx, rcx
 ; Character holder
 xor rdx, rdx
 
-; if (str[0] == '-' || str[0] == '+') {{ i++; }}
+; Flag set to 1 if the number is negative, 0 if positive
+xor r15, r15
+
+; if (str[0] == '+') {{ i++; }}
 mov dl, [rax]
-cmp rdx, 45
-je label_{if_true}
 cmp rdx, 43
 je label_{if_true}
+
+; else if (str[0] == '-') {{ r15 = 1; i++; }}
+cmp rdx, 45
+jne label_{if_false}
+
+mov r15, 1
+inc rcx
+
 jmp label_{if_false}
 
 label_{if_true}:
@@ -197,6 +209,13 @@ jmp label_{loop_index}
 
 label_{break_index}:
 
+; Lastly, check if the number was supposed to be negative - if it was, negate it
+cmp r15, 1
+jne label_{finished_index}
+
+neg rbx
+
+label_{finished_index}:
 ; Push the resulting int to the stack
 push rbx
 ").as_str();
