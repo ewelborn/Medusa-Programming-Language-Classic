@@ -228,12 +228,12 @@ fn medusa_parse_expression(mut pair: pest::iterators::Pair<Rule>, context: &mut 
 
     let stack_precedence_map = HashMap::from([
         (Rule::EOI, 0),
-        (Rule::expression, 0),
         (Rule::add, 2),
         (Rule::subtract, 2),
         (Rule::multiply, 4),
         (Rule::divide, 4),
         (Rule::cast, 6),
+        (Rule::expression, 51),
     ]);
 
     let input_precedence_map = HashMap::from([
@@ -265,7 +265,7 @@ fn medusa_parse_expression(mut pair: pest::iterators::Pair<Rule>, context: &mut 
                     if stack_precedence >= input_precedence {
                         if stack.last().is_none() {
                             // No clue what this case is
-                            break;
+                            panic!("Unexpected case");
                         } else {
                             output.push(stack.pop().unwrap());
                         }
@@ -284,7 +284,7 @@ fn medusa_parse_expression(mut pair: pest::iterators::Pair<Rule>, context: &mut 
         output.push(pair);
     }
 
-    //println!("{:#?}", output);
+    println!("Output!! {:#?}", output);
     //println!("Stack!! {:#?}", stack);
 
     // Generate assembly code from the postfix notation
