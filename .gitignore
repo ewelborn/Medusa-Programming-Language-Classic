@@ -1,0 +1,6 @@
+/target
+
+/*.exe
+/*.asm
+/*.lst
+/*.obj

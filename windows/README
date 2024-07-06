@@ -1,0 +1,3 @@
+Windows compiling is accomplished with...
+- nasm-2.16.03 (https://www.nasm.us/pub/nasm/releasebuilds/2.16.03/win64/)
+- ld.lld.exe (from llvm-mingw-20240518-msvcrt-x86_64) (https://github.com/mstorsjo/llvm-mingw/releases)

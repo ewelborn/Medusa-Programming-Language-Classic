@@ -1,0 +1,36 @@
+program = _{ SOI ~ newline_or_comment* ~ (statement ~ newline_or_comment*)* ~ EOI }
+
+newline_or_comment = _{NEWLINE | comment}
+comment = _{ ("//" ~ (!(NEWLINE) ~ ANY)* ~ (NEWLINE | EOI)) | ("/*" ~ ANY* ~ "*/") }
+
+statement = _{ (declaration | assignment | input | output) ~ ";" }
+
+declaration = { dataType ~ (input | assignment | identifier) }
+assignment = {identifier ~ "=" ~ expression}
+output = {(expression ~ "->" ~ "@")}
+input = {(identifier ~ "<-" ~ "@")}
+
+// https://docs.rs/pest/latest/pest/pratt_parser/struct.PrattParser.html
+expression = { prefix* ~ primary ~ (infix ~ prefix* ~ primary)* }
+
+prefix  = _{ cast }
+primary = _{ float | int | string | identifier | "(" ~ expression ~ ")" }
+infix   = _{ add | subtract | multiply | divide | modulo | power | concatenate }
+
+int    = @{ ("+" | "-")? ~ ASCII_DIGIT+ }
+float  = @{ ("+" | "-")? ~ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ }
+string =  { "\"" ~ (!"\"" ~ ANY)* ~ "\"" }
+cast   =  { "(int)" | "(float)" | "(string)" }
+
+add         = { "+" }
+subtract    = { "-" }
+multiply    = { "*" }
+divide      = { "/" }
+modulo      = { "%" }
+power       = { "^" }
+concatenate = { ".." }
+
+identifier = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC)* }
+dataType   =  { "int" | "float" | "string" }
+
+WHITESPACE = _{ " " | "\t" }
