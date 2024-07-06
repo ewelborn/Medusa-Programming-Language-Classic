@@ -5,7 +5,5 @@
 //"Nice! Your favorite number multiplied by 5 is..." -> @;
 //a * 5 -> @;
 
--500 -> @;
--10 -> @;
-6 -> @;
-54 -> @;
+int x <- @;
+x - 4 -> @;

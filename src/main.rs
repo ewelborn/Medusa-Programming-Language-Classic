@@ -410,6 +410,19 @@ push rax
 
                 stack.push(datatype);
             },
+            Rule::subtract => {
+                // Pop the top two numbers off the stack
+                stack.pop();
+                let datatype = stack.pop().unwrap();
+
+                if datatype == VariableDataType::INT {
+                    context.assembly_text += "pop rbx\npop rax\nsub rax, rbx\npush rax\n";
+                } else if datatype == VariableDataType::FLOAT {
+                    todo!();
+                }
+
+                stack.push(datatype);
+            },
             Rule::multiply => {
                 // Pop the top two numbers off the stack
                 stack.pop();
