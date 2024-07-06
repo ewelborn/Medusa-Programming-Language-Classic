@@ -1,6 +1,11 @@
-"What's your name? " -> @;
-string name <- @;
-"Nice to meet you. What's your favorite number?" -> @;
-int a <- @;
-"Nice! Your favorite number multiplied by 5 is..." -> @;
-a * 5 -> @;
+//"What's your name? " -> @;
+//string name <- @;
+//"Nice to meet you. What's your favorite number?" -> @;
+//int a <- @;
+//"Nice! Your favorite number multiplied by 5 is..." -> @;
+//a * 5 -> @;
+
+-500 -> @;
+-10 -> @;
+6 -> @;
+54 -> @;
