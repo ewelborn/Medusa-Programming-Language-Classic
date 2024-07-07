@@ -232,6 +232,7 @@ fn medusa_parse_expression(mut pair: pest::iterators::Pair<Rule>, context: &mut 
         (Rule::subtract, 2),
         (Rule::multiply, 4),
         (Rule::divide, 4),
+        (Rule::modulo, 4),
         (Rule::cast, 6),
         (Rule::expression, 51),
     ]);
@@ -241,6 +242,7 @@ fn medusa_parse_expression(mut pair: pest::iterators::Pair<Rule>, context: &mut 
         (Rule::subtract, 1),
         (Rule::multiply, 3),
         (Rule::divide, 3),
+        (Rule::modulo, 3),
         (Rule::cast, 5),
         (Rule::expression, 50),
     ]);
@@ -253,7 +255,7 @@ fn medusa_parse_expression(mut pair: pest::iterators::Pair<Rule>, context: &mut 
             Rule::int | Rule::float | Rule::string | Rule::identifier => {
                 output.push(pair);
             },
-            Rule::add | Rule::subtract | Rule::multiply | Rule::divide | Rule::cast | Rule::expression => {
+            Rule::add | Rule::subtract | Rule::multiply | Rule::divide | Rule::modulo | Rule::cast | Rule::expression => {
                 loop {
                     let stack_precedence: i32 = match stack.last() {
                         Some(x) => *stack_precedence_map.get(&x.as_rule()).unwrap(),
@@ -443,6 +445,19 @@ push rax
 
                 if datatype == VariableDataType::INT {
                     context.assembly_text += "pop rbx\npop rax\nxor rdx, rdx\nidiv rbx\npush rax\n";
+                } else if datatype == VariableDataType::FLOAT {
+                    todo!();
+                }
+
+                stack.push(datatype);
+            },
+            Rule::modulo => {
+                // Pop the top two numbers off the stack
+                stack.pop();
+                let datatype = stack.pop().unwrap();
+
+                if datatype == VariableDataType::INT {
+                    context.assembly_text += "pop rbx\npop rax\nxor rdx, rdx\nidiv rbx\npush rdx\n";
                 } else if datatype == VariableDataType::FLOAT {
                     todo!();
                 }
