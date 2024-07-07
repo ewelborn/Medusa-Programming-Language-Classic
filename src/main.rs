@@ -436,6 +436,19 @@ push rax
 
                 stack.push(datatype);
             },
+            Rule::divide => {
+                // Pop the top two numbers off the stack
+                stack.pop();
+                let datatype = stack.pop().unwrap();
+
+                if datatype == VariableDataType::INT {
+                    context.assembly_text += "pop rbx\npop rax\nxor rdx, rdx\nidiv rbx\npush rax\n";
+                } else if datatype == VariableDataType::FLOAT {
+                    todo!();
+                }
+
+                stack.push(datatype);
+            },
             Rule::cast => 'cast: {
                 let from_datatype = stack.pop().unwrap();
                 let to_datatype = match token.as_span().as_str() {
