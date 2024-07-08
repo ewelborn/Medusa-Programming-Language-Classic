@@ -28,6 +28,26 @@ struct CompilerContext {
     variables: HashMap<String, VariableDataType>,
 }
 
+/// Pops a float off the stack, converts it to an int, and pushes it back onto the stack.
+fn medusa_float_to_int(context: &mut CompilerContext) {
+    context.assembly_text += format!("
+pop rax
+movq xmm1, rax
+cvtsd2si rax, xmm1
+push rax
+").as_str();
+}
+
+/// Pops an int off the stack, converts it to a float, and pushes it back onto the stack.
+fn medusa_int_to_float(context: &mut CompilerContext) {
+    context.assembly_text += format!("
+pop rax
+cvtsi2sd xmm1, rax
+movq rax, xmm1
+push rax
+").as_str();
+}
+
 /// Pops an int off the stack, converts it to a string, and pushes it back onto the stack.
 fn medusa_int_to_string(context: &mut CompilerContext) {
     let loop_index = context.label_index;
@@ -482,7 +502,7 @@ push rax
                     VariableDataType::INT => {
                         match to_datatype {
                             VariableDataType::FLOAT => {
-                                todo!();
+                                medusa_int_to_float(context);
                             }
                             VariableDataType::STRING => {
                                 medusa_int_to_string(context);
@@ -493,7 +513,7 @@ push rax
                     VariableDataType::FLOAT => {
                         match to_datatype {
                             VariableDataType::INT => {
-                                todo!();
+                                medusa_float_to_int(context);
                             }
                             VariableDataType::STRING => {
                                 todo!();
@@ -634,7 +654,7 @@ fn medusa_parse_output(mut pair: pest::iterators::Pair<Rule>, context: &mut Comp
             medusa_int_to_string(context);
         },
         VariableDataType::FLOAT => {
-
+            todo!();
         },
         VariableDataType::STRING => {
             // Do nothing
@@ -719,7 +739,7 @@ pop qword [rel var_{identifier}]
 ").as_str();
         },
         VariableDataType::FLOAT => {
-
+            todo!();
         },
         VariableDataType::STRING => {
             // Copy the string into the variable
