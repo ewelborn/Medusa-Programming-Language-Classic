@@ -577,7 +577,15 @@ push rax
                 if datatype == VariableDataType::INT {
                     context.assembly_text += "pop rbx\npop rax\nadd rax, rbx\npush rax\n";
                 } else if datatype == VariableDataType::FLOAT {
-                    todo!();
+                    context.assembly_text += "
+pop rbx
+movq xmm2, rbx
+pop rax
+movq xmm1, rax
+addpd xmm1, xmm2
+movq rax, xmm1
+push rax
+";
                 }
 
                 stack.push(datatype);

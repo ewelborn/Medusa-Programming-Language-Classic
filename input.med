@@ -5,8 +5,7 @@
 //"Nice! Your favorite number multiplied by 5 is..." -> @;
 //a * 5 -> @;
 
-float x = 5.56;
-float y = 7.24;
-
-(int) x -> @;
-(int) y -> @;
+int x = 6;
+float z = (float) x + 2.5;
+z + 0.334 -> @;
+(int) z -> @;
