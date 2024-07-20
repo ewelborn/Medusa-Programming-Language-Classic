@@ -598,7 +598,15 @@ push rax
                 if datatype == VariableDataType::INT {
                     context.assembly_text += "pop rbx\npop rax\nsub rax, rbx\npush rax\n";
                 } else if datatype == VariableDataType::FLOAT {
-                    todo!();
+                    context.assembly_text += "
+pop rbx
+movq xmm2, rbx
+pop rax
+movq xmm1, rax
+subpd xmm1, xmm2
+movq rax, xmm1
+push rax
+";
                 }
 
                 stack.push(datatype);
@@ -611,7 +619,15 @@ push rax
                 if datatype == VariableDataType::INT {
                     context.assembly_text += "pop rbx\npop rax\nxor rdx, rdx\nimul rbx\npush rax\n";
                 } else if datatype == VariableDataType::FLOAT {
-                    todo!();
+                    context.assembly_text += "
+pop rbx
+movq xmm2, rbx
+pop rax
+movq xmm1, rax
+mulpd xmm1, xmm2
+movq rax, xmm1
+push rax
+";
                 }
 
                 stack.push(datatype);
@@ -624,7 +640,15 @@ push rax
                 if datatype == VariableDataType::INT {
                     context.assembly_text += "pop rbx\npop rax\nxor rdx, rdx\nidiv rbx\npush rax\n";
                 } else if datatype == VariableDataType::FLOAT {
-                    todo!();
+                    context.assembly_text += "
+pop rbx
+movq xmm2, rbx
+pop rax
+movq xmm1, rax
+divpd xmm1, xmm2
+movq rax, xmm1
+push rax
+";
                 }
 
                 stack.push(datatype);
@@ -637,7 +661,7 @@ push rax
                 if datatype == VariableDataType::INT {
                     context.assembly_text += "pop rbx\npop rax\nxor rdx, rdx\nidiv rbx\npush rdx\n";
                 } else if datatype == VariableDataType::FLOAT {
-                    todo!();
+                    panic!("Modulo is not supported for floats")
                 }
 
                 stack.push(datatype);
