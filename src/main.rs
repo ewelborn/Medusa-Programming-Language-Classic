@@ -28,6 +28,17 @@ struct CompilerContext {
     variables: HashMap<String, VariableDataType>,
 }
 
+#[derive(Debug, Clone)]
+struct CompileError {
+    body: String,
+}
+
+impl std::fmt::Display for CompileError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.body)
+    }
+}
+
 /// Pops a float off the stack, converts it to an int, and pushes it back onto the stack.
 fn medusa_float_to_int(context: &mut CompilerContext) {
     context.assembly_text += format!("
@@ -980,37 +991,18 @@ fn medusa_parse_statement(mut pair: pest::iterators::Pair<Rule>, context: &mut C
     };
 }
 
-fn main() {
-    let source_text = std::fs::read_to_string("input.med")
-        .expect("Could not read input.med");
-
-    //let abstract_syntax_tree = parse(&source_text).expect("Could not parse the source text");
-
+fn compile_from_text(source_text: String, output_file_name: String) -> Result<(), CompileError>
+{
     let parse_result = MedusaParser::parse(Rule::program, &source_text);
 
     let file = match parse_result {
         Err(e) => {
-            println!("{:#?}", e);
-            panic!("AHH");
+            return Err(CompileError{
+                body: format!("{:#?}", e)
+            });
         },
         Ok(v) => v
     };
-        //.expect("Could not parse the source text");
-
-    //println!("{:#?}", file);
-
-    /*variables.insert("s".to_string(), VariableDataType::STRING);
-    variables.insert("x".to_string(), VariableDataType::INT);
-    variables.insert("q".to_string(), VariableDataType::FLOAT);*/
-
-    /*let assembly_text = "
-    mov rcx, 0
-    lea rdx, [rel message]
-    mov r8, 0
-    mov r9, 0
-    call MessageBoxA
-    ".to_string();
-    let mut assembly_data = "message: db \"Hello, world! :)\", 0\n".to_string();*/
 
     let mut context = CompilerContext {
         variable_index: 0,
@@ -1126,7 +1118,9 @@ buffer_string resb 1024");
             }
         },
         _ => {
-            panic!("Assembler failed: {}", String::from_utf8(assembler_output.stderr).unwrap());
+            return Err(CompileError{
+                body: format!("Assembler failed: {}", String::from_utf8(assembler_output.stderr).unwrap())
+            });
         }
     }
 
@@ -1146,7 +1140,33 @@ buffer_string resb 1024");
             }
         },
         _ => {
-            panic!("Linker failed: {}", String::from_utf8(linker_output.stderr).unwrap());
+            return Err(CompileError{
+                body: format!("Linker failed: {}", String::from_utf8(linker_output.stderr).unwrap())
+            });
         }
     }
+
+    return Ok(());
+}
+
+fn main() {
+    let args: Vec<String> = std::env::args().collect();
+
+    let input_file_name = if (args.len() > 1) {
+        args[1].clone()
+    } else {
+        "input.med".to_string()
+    };
+
+    let source_text = std::fs::read_to_string(input_file_name.clone())
+        .expect(format!("Could not read source file {}", input_file_name).as_str());
+
+    match compile_from_text(source_text, "medusa_output".to_owned()) {
+        Ok(()) => {
+
+        },
+        Err(e) => {
+            panic!("Compile error: {}", e);
+        }
+    };
 }
