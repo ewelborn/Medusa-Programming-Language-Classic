@@ -1100,10 +1100,15 @@ ignore dq 0
 section .bss
 buffer_string resb 1024");
 
-    fs::write("medusa_output.asm", assembly_source).expect("Could not write assembly source file");
+    fs::write(format!("{}.asm", output_file_name), assembly_source).expect("Could not write assembly source file");
 
     let assembler_output = Command::new("./windows/nasm.exe")
-        .args(["-f win64", "medusa_output.asm", "-o medusa_output.obj", "-l medusa_output.lst"])
+        .args([
+            "-f win64", 
+            format!("{}.asm", output_file_name).as_str(), 
+            format!("-o {}.obj", output_file_name).as_str(), 
+            format!("-l {}.lst", output_file_name).as_str()
+        ])
         .output()
         .unwrap();
 
@@ -1125,7 +1130,12 @@ buffer_string resb 1024");
     }
 
     let linker_output = Command::new("./windows/ld.lld.exe")
-        .args(["medusa_output.obj", "-omedusa_output.exe", "C:/Windows/System32/user32.dll", "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.22000.0/um/x64/kernel32.lib"])
+        .args([
+            format!("{}.obj", output_file_name).as_str(), 
+            format!("-o{}.exe", output_file_name).as_str(), 
+            "C:/Windows/System32/user32.dll", 
+            "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.22000.0/um/x64/kernel32.lib"
+        ])
         .output()
         .unwrap();
 
@@ -1158,10 +1168,16 @@ fn main() {
         "input.med".to_string()
     };
 
+    let output_file_name = if (args.len() > 2) {
+        args[2].clone()
+    } else {
+        "medusa_output".to_string()
+    };
+
     let source_text = std::fs::read_to_string(input_file_name.clone())
         .expect(format!("Could not read source file {}", input_file_name).as_str());
 
-    match compile_from_text(source_text, "medusa_output".to_owned()) {
+    match compile_from_text(source_text, output_file_name) {
         Ok(()) => {
 
         },

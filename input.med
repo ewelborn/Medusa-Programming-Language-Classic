@@ -5,7 +5,8 @@
 //"Nice! Your favorite number multiplied by 5 is..." -> @;
 //a * 5 -> @;
 
-int x <- @;
-float z = (float) x % 2.5;
+float x <- @;
+x -> @;
+float z = x * 2.5;
 z - 0.05 -> @;
 (int) z -> @;
