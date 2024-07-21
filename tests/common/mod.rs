@@ -30,7 +30,3 @@ pub fn compile_and_get_stripped_output(source_text: &str) -> String {
 
     return output;
 }
-
-pub fn load_test_from_directory(test_name: &str) -> String {
-    std::fs::read_to_string(format!("./tests/{}", test_name)).unwrap()
-}
