@@ -1,7 +1,7 @@
 mod common;
 
 #[test]
-fn test_hello_world() {
+fn hello_world() {
     let program = r#"
 "Hello, world!" -> @;
 "#;
