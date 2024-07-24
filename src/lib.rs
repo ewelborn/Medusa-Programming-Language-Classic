@@ -821,7 +821,7 @@ push rax
                                 medusa_float_to_int(context);
                             }
                             VariableDataType::STRING => {
-                                todo!();
+                                medusa_float_to_string(context);
                             },
                             _ => unreachable!()
                         }
@@ -829,10 +829,10 @@ push rax
                     VariableDataType::STRING => {
                         match to_datatype {
                             VariableDataType::INT => {
-                                todo!();
+                                medusa_string_to_int(context);
                             }
                             VariableDataType::FLOAT => {
-                                todo!();
+                                medusa_string_to_float(context);
                             },
                             _ => unreachable!()
                         }
