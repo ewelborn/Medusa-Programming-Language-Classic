@@ -58,3 +58,63 @@ x -> @;
         expected_output
     );
 }
+
+#[test]
+fn string_to_float_4() {
+    let program = r#"
+float x = (float) "4.2abw";
+x -> @;
+"#;
+
+    let expected_output = "0";
+
+    assert_eq!(
+        common::compile_and_get_stripped_output(program),
+        expected_output
+    );
+}
+
+#[test]
+fn string_to_int_1() {
+    let program = r#"
+int x = (int) "15";
+x -> @;
+"#;
+
+    let expected_output = "15";
+
+    assert_eq!(
+        common::compile_and_get_stripped_output(program),
+        expected_output
+    );
+}
+
+#[test]
+fn string_to_int_2() {
+    let program = r#"
+int x = (int) "-174";
+x -> @;
+"#;
+
+    let expected_output = "-174";
+
+    assert_eq!(
+        common::compile_and_get_stripped_output(program),
+        expected_output
+    );
+}
+
+#[test]
+fn string_to_int_3() {
+    let program = r#"
+int x = (int) "6ac2";
+x -> @;
+"#;
+
+    let expected_output = "0";
+
+    assert_eq!(
+        common::compile_and_get_stripped_output(program),
+        expected_output
+    );
+}
