@@ -579,14 +579,14 @@ fn medusa_parse_expression(mut pair: pest::iterators::Pair<Rule>, context: &mut 
         output.push(pair);
     }
 
-    println!("Output!! {:#?}", output);
+    //println!("Output!! {:#?}", output);
     //println!("Stack!! {:#?}", stack);
 
     // Generate assembly code from the postfix notation
     let mut stack = Vec::new();
 
     for token in output {
-        println!("{:?} - {:?}", token, stack);
+        //println!("{:?} - {:?}", token, stack);
 
         // If the current token is a variable, load it on the stack
         match token.as_rule() {
