@@ -46,6 +46,17 @@ jmp label_{quotient_loop_index}
 
 label_{no_minus_sign}:
 
+; Otherwise, if this is the first character, and it's a plus sign, then ignore it
+cmp rcx, 1
+jne label_{no_plus_sign}
+cmp r8b, '+'
+jne label_{no_plus_sign}
+
+; It is a plus sign! Loop again.
+jmp label_{quotient_loop_index}
+
+label_{no_plus_sign}:
+
 ; If we reached the end of the string, stop parsing the string
 
 cmp r8b, 0

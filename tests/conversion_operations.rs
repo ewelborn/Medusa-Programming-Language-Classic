@@ -164,6 +164,21 @@ x -> @;
 }
 
 #[test]
+fn string_to_float_8() {
+    let program = r#"
+float x = (float) "+6.0625";
+x -> @;
+"#;
+
+    let expected_output = "6.062500";
+
+    assert_eq!(
+        common::compile_and_get_stripped_output(program, function_name!()),
+        expected_output
+    );
+}
+
+#[test]
 fn string_to_int_1() {
     let program = r#"
 int x = (int) "15";
