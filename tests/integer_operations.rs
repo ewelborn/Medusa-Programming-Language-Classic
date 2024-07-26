@@ -1,3 +1,5 @@
+use stdext::function_name;
+
 mod common;
 
 #[test]
@@ -10,7 +12,7 @@ x + 3 -> @;
     let expected_output = "8";
 
     assert_eq!(
-        common::compile_and_get_stripped_output(program),
+        common::compile_and_get_stripped_output(program, function_name!()),
         expected_output
     );
 }
@@ -25,7 +27,7 @@ x + -4 -> @;
     let expected_output = "1";
 
     assert_eq!(
-        common::compile_and_get_stripped_output(program),
+        common::compile_and_get_stripped_output(program, function_name!()),
         expected_output
     );
 }
@@ -40,7 +42,7 @@ x + -7 -> @;
     let expected_output = "-2";
 
     assert_eq!(
-        common::compile_and_get_stripped_output(program),
+        common::compile_and_get_stripped_output(program, function_name!()),
         expected_output
     );
 }
@@ -55,7 +57,7 @@ x - 4 -> @;
     let expected_output = "1";
 
     assert_eq!(
-        common::compile_and_get_stripped_output(program),
+        common::compile_and_get_stripped_output(program, function_name!()),
         expected_output
     );
 }
@@ -70,7 +72,7 @@ x - -5 -> @;
     let expected_output = "10";
 
     assert_eq!(
-        common::compile_and_get_stripped_output(program),
+        common::compile_and_get_stripped_output(program, function_name!()),
         expected_output
     );
 }
@@ -85,7 +87,7 @@ x - 8 -> @;
     let expected_output = "-3";
 
     assert_eq!(
-        common::compile_and_get_stripped_output(program),
+        common::compile_and_get_stripped_output(program, function_name!()),
         expected_output
     );
 }

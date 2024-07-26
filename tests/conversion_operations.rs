@@ -1,3 +1,5 @@
+use stdext::function_name;
+
 mod common;
 
 #[test]
@@ -9,7 +11,7 @@ fn float_to_string_1() {
     let expected_output = "5.500000";
 
     assert_eq!(
-        common::compile_and_get_stripped_output(program),
+        common::compile_and_get_stripped_output(program, function_name!()),
         expected_output
     );
 }
@@ -23,7 +25,7 @@ fn float_to_string_2() {
     let expected_output = "142.125000";
 
     assert_eq!(
-        common::compile_and_get_stripped_output(program),
+        common::compile_and_get_stripped_output(program, function_name!()),
         expected_output
     );
 }
@@ -37,7 +39,7 @@ fn float_to_string_3() {
     let expected_output = "-52.250000";
 
     assert_eq!(
-        common::compile_and_get_stripped_output(program),
+        common::compile_and_get_stripped_output(program, function_name!()),
         expected_output
     );
 }
@@ -51,7 +53,7 @@ fn float_to_string_4() {
     let expected_output = "0.999999";
 
     assert_eq!(
-        common::compile_and_get_stripped_output(program),
+        common::compile_and_get_stripped_output(program, function_name!()),
         expected_output
     );
 }
@@ -66,7 +68,7 @@ x -> @;
     let expected_output = "5.500000";
 
     assert_eq!(
-        common::compile_and_get_stripped_output(program),
+        common::compile_and_get_stripped_output(program, function_name!()),
         expected_output
     );
 }
@@ -81,7 +83,7 @@ x -> @;
     let expected_output = "17.649999";
 
     assert_eq!(
-        common::compile_and_get_stripped_output(program),
+        common::compile_and_get_stripped_output(program, function_name!()),
         expected_output
     );
 }
@@ -96,7 +98,7 @@ x -> @;
     let expected_output = "-6.125000";
 
     assert_eq!(
-        common::compile_and_get_stripped_output(program),
+        common::compile_and_get_stripped_output(program, function_name!()),
         expected_output
     );
 }
@@ -111,7 +113,7 @@ x -> @;
     let expected_output = "0.000000";
 
     assert_eq!(
-        common::compile_and_get_stripped_output(program),
+        common::compile_and_get_stripped_output(program, function_name!()),
         expected_output
     );
 }
@@ -126,7 +128,7 @@ x -> @;
     let expected_output = "0.000000";
 
     assert_eq!(
-        common::compile_and_get_stripped_output(program),
+        common::compile_and_get_stripped_output(program, function_name!()),
         expected_output
     );
 }
@@ -141,7 +143,7 @@ x -> @;
     let expected_output = "123.000000";
 
     assert_eq!(
-        common::compile_and_get_stripped_output(program),
+        common::compile_and_get_stripped_output(program, function_name!()),
         expected_output
     );
 }
@@ -156,7 +158,7 @@ x -> @;
     let expected_output = "0.564000";
 
     assert_eq!(
-        common::compile_and_get_stripped_output(program),
+        common::compile_and_get_stripped_output(program, function_name!()),
         expected_output
     );
 }
@@ -171,7 +173,7 @@ x -> @;
     let expected_output = "15";
 
     assert_eq!(
-        common::compile_and_get_stripped_output(program),
+        common::compile_and_get_stripped_output(program, function_name!()),
         expected_output
     );
 }
@@ -186,7 +188,7 @@ x -> @;
     let expected_output = "-174";
 
     assert_eq!(
-        common::compile_and_get_stripped_output(program),
+        common::compile_and_get_stripped_output(program, function_name!()),
         expected_output
     );
 }
@@ -201,7 +203,7 @@ x -> @;
     let expected_output = "0";
 
     assert_eq!(
-        common::compile_and_get_stripped_output(program),
+        common::compile_and_get_stripped_output(program, function_name!()),
         expected_output
     );
 }

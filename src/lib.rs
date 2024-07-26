@@ -945,7 +945,7 @@ fn medusa_parse_statement(pair: pest::iterators::Pair<Rule>, context: &mut Compi
     };
 }
 
-pub fn compile_from_text(source_text: &str, output_file_name: String) -> Result<(), CompileError> {
+pub fn compile_from_text(source_text: &str, output_file_name: &str) -> Result<(), CompileError> {
     let parse_result = MedusaParser::parse(Rule::program, &source_text);
 
     let file = match parse_result {

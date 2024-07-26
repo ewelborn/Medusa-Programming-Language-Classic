@@ -78,6 +78,7 @@ dependencies = [
  "pest",
  "pest_derive",
  "regex",
+ "stdext",
 ]
 
 [[package]]
@@ -194,6 +195,12 @@ dependencies = [
  "cpufeatures",
  "digest",
 ]
+
+[[package]]
+name = "stdext"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4af28eeb7c18ac2dbdb255d40bee63f203120e1db6b0024b177746ebec7049c1"
 
 [[package]]
 name = "syn"
