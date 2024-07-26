@@ -173,3 +173,7 @@ label_{end}:
 ; ... and push the float to the stack
 movq rax, xmm1
 push rax
+
+; ======================================
+; End of string_to_float.asm
+; ======================================
