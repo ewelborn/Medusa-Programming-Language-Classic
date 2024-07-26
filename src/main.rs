@@ -17,9 +17,7 @@ fn main() {
         .expect(format!("Could not read source file {}", input_file_name).as_str());
 
     match medusa_lang::compile_from_text(&source_text, output_file_name) {
-        Ok(()) => {
-
-        },
+        Ok(()) => {}
         Err(e) => {
             panic!("Compile error: {}", e);
         }

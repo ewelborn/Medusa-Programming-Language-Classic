@@ -1,10 +1,10 @@
 // The following source file was heavily referenced:
 // https://github.com/pest-parser/book/blob/master/examples/jlang-parser/src/main.rs
 
+use std::collections::HashMap;
+use std::fs;
 use std::mem::replace;
 use std::process::Command;
-use std::fs;
-use std::collections::HashMap;
 
 use pest::iterators::Pair;
 use pest::Parser;
@@ -18,7 +18,7 @@ pub struct MedusaParser;
 enum VariableDataType {
     INT,
     STRING,
-    FLOAT
+    FLOAT,
 }
 
 struct CompilerContext {
@@ -45,12 +45,12 @@ fn print_assembly_with_context(file_name: &str, context: &mut CompilerContext) {
         .expect(format!("Could not read assembly file {}", file_name).as_str());
 
     let label_matcher = regex::Regex::new(r"[^\{]\{(?<label>[^\{\}]+)\}[^\}]").unwrap();
-    
+
     let mut labels_to_indices: HashMap<String, u64> = HashMap::new();
 
     for x in label_matcher.captures_iter(&source_text) {
         let label = x.name("label").unwrap().as_str();
-        
+
         if !labels_to_indices.contains_key(label) {
             labels_to_indices.insert(label.to_string(), context.label_index);
             context.label_index += 1;
@@ -61,9 +61,18 @@ fn print_assembly_with_context(file_name: &str, context: &mut CompilerContext) {
         // Return the index of the label while preserving the first and last character of the match
         // (which are not actually a part of the label, it's confusing, I know)
         let raw_capture = x.get(0).unwrap().as_str();
-        raw_capture.chars().nth(0).unwrap().to_string() + 
-        labels_to_indices.get(x.name("label").unwrap().as_str()).unwrap().to_string().as_str() + 
-        raw_capture.chars().nth(raw_capture.len() - 1).unwrap().to_string().as_str()
+        raw_capture.chars().nth(0).unwrap().to_string()
+            + labels_to_indices
+                .get(x.name("label").unwrap().as_str())
+                .unwrap()
+                .to_string()
+                .as_str()
+            + raw_capture
+                .chars()
+                .nth(raw_capture.len() - 1)
+                .unwrap()
+                .to_string()
+                .as_str()
     };
 
     let processed_text = label_matcher.replace_all(&source_text, &replacement);
@@ -73,12 +82,15 @@ fn print_assembly_with_context(file_name: &str, context: &mut CompilerContext) {
 
 /// Pops a float off the stack, converts it to an int, and pushes it back onto the stack.
 fn medusa_float_to_int(context: &mut CompilerContext) {
-    context.assembly_text += format!("
+    context.assembly_text += format!(
+        "
 pop rax
 movq xmm1, rax
 cvtsd2si rax, xmm1
 push rax
-").as_str();
+"
+    )
+    .as_str();
 }
 
 /// Pops an int off the stack, converts it to a float, and pushes it back onto the stack.
@@ -434,7 +446,10 @@ push rbx
 ").as_str();
 }
 
-fn medusa_parse_expression(mut pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) -> VariableDataType {
+fn medusa_parse_expression(
+    mut pair: pest::iterators::Pair<Rule>,
+    context: &mut CompilerContext,
+) -> VariableDataType {
     // Convert the entire expression to postfix notation and then convert it to assembly
     // https://www.andrew.cmu.edu/course/15-200/s06/applications/ln/junk.html
     let mut pairs = pair.into_inner();
@@ -467,16 +482,22 @@ fn medusa_parse_expression(mut pair: pest::iterators::Pair<Rule>, context: &mut 
         match pair.as_rule() {
             Rule::int | Rule::float | Rule::string | Rule::identifier => {
                 output.push(pair);
-            },
-            Rule::add | Rule::subtract | Rule::multiply | Rule::divide | Rule::modulo | Rule::cast | Rule::expression => {
+            }
+            Rule::add
+            | Rule::subtract
+            | Rule::multiply
+            | Rule::divide
+            | Rule::modulo
+            | Rule::cast
+            | Rule::expression => {
                 loop {
                     let stack_precedence: i32 = match stack.last() {
                         Some(x) => *stack_precedence_map.get(&x.as_rule()).unwrap(),
                         None => 0,
                     };
-    
+
                     let input_precedence = *input_precedence_map.get(&pair.as_rule()).unwrap();
-    
+
                     if stack_precedence >= input_precedence {
                         if stack.last().is_none() {
                             // No clue what this case is
@@ -489,8 +510,8 @@ fn medusa_parse_expression(mut pair: pest::iterators::Pair<Rule>, context: &mut 
                         break;
                     }
                 }
-            },
-            _ => unreachable!()
+            }
+            _ => unreachable!(),
         };
     }
 
@@ -511,13 +532,18 @@ fn medusa_parse_expression(mut pair: pest::iterators::Pair<Rule>, context: &mut 
         // If the current token is a variable, load it on the stack
         match token.as_rule() {
             Rule::int => {
-                context.assembly_text += format!("mov rax, {}\npush rax\n", token.as_span().as_str()).as_str();
+                context.assembly_text +=
+                    format!("mov rax, {}\npush rax\n", token.as_span().as_str()).as_str();
                 stack.push(VariableDataType::INT);
-            },
+            }
             Rule::float => {
-                context.assembly_text += format!("mov rax, __float64__({})\npush rax\n", token.as_span().as_str()).as_str();
+                context.assembly_text += format!(
+                    "mov rax, __float64__({})\npush rax\n",
+                    token.as_span().as_str()
+                )
+                .as_str();
                 stack.push(VariableDataType::FLOAT);
-            },
+            }
             Rule::string => {
                 // Copy the string into a variable in the data section
                 let string_index = context.variable_index;
@@ -530,11 +556,13 @@ fn medusa_parse_expression(mut pair: pest::iterators::Pair<Rule>, context: &mut 
                 context.label_index += 1;
 
                 let raw_string = token.as_span().as_str();
-                context.assembly_data += format!("string_{string_index} db {raw_string}, 0\n").as_str();
+                context.assembly_data +=
+                    format!("string_{string_index} db {raw_string}, 0\n").as_str();
 
                 // TODO: Fix memory leak - HeapAlloc for the string is never free'd
 
-                context.assembly_text += format!("
+                context.assembly_text += format!(
+                    "
 ; Allocate space for string {} on the heap
 mov rcx, [rel heap_handle]
 mov rdx, 12
@@ -558,35 +586,39 @@ jmp label_{loop_index}
 
 label_{break_index}:
 push rax
-", token.as_span().as_str()).as_str();
+",
+                    token.as_span().as_str()
+                )
+                .as_str();
                 stack.push(VariableDataType::STRING);
                 //todo!();
-            },
+            }
             Rule::expression => {
                 stack.push(medusa_parse_expression(token, context));
                 continue;
-            },
-            Rule::identifier => {
-                match context.variables.get(token.as_span().as_str()) {
-                    Some(variable) => {
-                        let identifier = token.as_span().as_str();
-                        match variable {
-                            VariableDataType::INT => {
-                                context.assembly_text += format!("mov rax, [rel var_{identifier}]\npush rax\n").as_str();
-                                stack.push(VariableDataType::INT);
-                            },
-                            VariableDataType::FLOAT => {
-                                context.assembly_text += format!("mov rax, [rel var_{identifier}]\npush rax\n").as_str();
-                                stack.push(VariableDataType::FLOAT);
-                            },
-                            VariableDataType::STRING => {
-                                context.assembly_text += format!("lea rax, [rel var_{identifier}]\npush rax\n").as_str();
-                                stack.push(VariableDataType::STRING);
-                            },
+            }
+            Rule::identifier => match context.variables.get(token.as_span().as_str()) {
+                Some(variable) => {
+                    let identifier = token.as_span().as_str();
+                    match variable {
+                        VariableDataType::INT => {
+                            context.assembly_text +=
+                                format!("mov rax, [rel var_{identifier}]\npush rax\n").as_str();
+                            stack.push(VariableDataType::INT);
                         }
-                    },
-                    None => panic!("Variable used but not declared"),
+                        VariableDataType::FLOAT => {
+                            context.assembly_text +=
+                                format!("mov rax, [rel var_{identifier}]\npush rax\n").as_str();
+                            stack.push(VariableDataType::FLOAT);
+                        }
+                        VariableDataType::STRING => {
+                            context.assembly_text +=
+                                format!("lea rax, [rel var_{identifier}]\npush rax\n").as_str();
+                            stack.push(VariableDataType::STRING);
+                        }
+                    }
                 }
+                None => panic!("Variable used but not declared"),
             },
             _ => {}
         }
@@ -594,19 +626,26 @@ push rax
         // If the current token is an operation, make sure the semantic rules are not being violated (i.e. correct datatypes on all variables)
         match token.as_rule() {
             // Mathematical binary operations
-            Rule::add | Rule::subtract | Rule::multiply | Rule::divide | Rule::modulo | Rule::power => {
+            Rule::add
+            | Rule::subtract
+            | Rule::multiply
+            | Rule::divide
+            | Rule::modulo
+            | Rule::power => {
                 //println!("{:?}", stack);
                 let left_operand = stack[stack.len() - 2];
                 let right_operand = stack[stack.len() - 1];
 
                 if left_operand != right_operand {
                     panic!("Datatypes don't match");
-                } else if 
-                (left_operand != VariableDataType::INT && left_operand != VariableDataType::FLOAT) ||
-                (right_operand != VariableDataType::INT && right_operand != VariableDataType::FLOAT) {
+                } else if (left_operand != VariableDataType::INT
+                    && left_operand != VariableDataType::FLOAT)
+                    || (right_operand != VariableDataType::INT
+                        && right_operand != VariableDataType::FLOAT)
+                {
                     panic!("Math operation on non-number");
                 }
-            },
+            }
             _ => {}
         }
 
@@ -632,7 +671,7 @@ push rax
                 }
 
                 stack.push(datatype);
-            },
+            }
             Rule::subtract => {
                 // Pop the top two numbers off the stack
                 stack.pop();
@@ -653,7 +692,7 @@ push rax
                 }
 
                 stack.push(datatype);
-            },
+            }
             Rule::multiply => {
                 // Pop the top two numbers off the stack
                 stack.pop();
@@ -674,7 +713,7 @@ push rax
                 }
 
                 stack.push(datatype);
-            },
+            }
             Rule::divide => {
                 // Pop the top two numbers off the stack
                 stack.pop();
@@ -695,7 +734,7 @@ push rax
                 }
 
                 stack.push(datatype);
-            },
+            }
             Rule::modulo => {
                 // Pop the top two numbers off the stack
                 stack.pop();
@@ -708,14 +747,14 @@ push rax
                 }
 
                 stack.push(datatype);
-            },
+            }
             Rule::cast => 'cast: {
                 let from_datatype = stack.pop().unwrap();
                 let to_datatype = match token.as_span().as_str() {
                     "(int)" => VariableDataType::INT,
                     "(float)" => VariableDataType::FLOAT,
                     "(string)" => VariableDataType::STRING,
-                    _ => unreachable!()
+                    _ => unreachable!(),
                 };
 
                 if from_datatype == to_datatype {
@@ -724,39 +763,33 @@ push rax
                 }
 
                 match from_datatype {
-                    VariableDataType::INT => {
-                        match to_datatype {
-                            VariableDataType::FLOAT => {
-                                medusa_int_to_float(context);
-                            }
-                            VariableDataType::STRING => {
-                                medusa_int_to_string(context);
-                            },
-                            _ => unreachable!()
+                    VariableDataType::INT => match to_datatype {
+                        VariableDataType::FLOAT => {
+                            medusa_int_to_float(context);
                         }
+                        VariableDataType::STRING => {
+                            medusa_int_to_string(context);
+                        }
+                        _ => unreachable!(),
                     },
-                    VariableDataType::FLOAT => {
-                        match to_datatype {
-                            VariableDataType::INT => {
-                                medusa_float_to_int(context);
-                            }
-                            VariableDataType::STRING => {
-                                medusa_float_to_string(context);
-                            },
-                            _ => unreachable!()
+                    VariableDataType::FLOAT => match to_datatype {
+                        VariableDataType::INT => {
+                            medusa_float_to_int(context);
                         }
+                        VariableDataType::STRING => {
+                            medusa_float_to_string(context);
+                        }
+                        _ => unreachable!(),
                     },
-                    VariableDataType::STRING => {
-                        match to_datatype {
-                            VariableDataType::INT => {
-                                medusa_string_to_int(context);
-                            }
-                            VariableDataType::FLOAT => {
-                                medusa_string_to_float(context);
-                            },
-                            _ => unreachable!()
+                    VariableDataType::STRING => match to_datatype {
+                        VariableDataType::INT => {
+                            medusa_string_to_int(context);
                         }
-                    }
+                        VariableDataType::FLOAT => {
+                            medusa_string_to_float(context);
+                        }
+                        _ => unreachable!(),
+                    },
                 }
 
                 stack.push(to_datatype);
@@ -770,12 +803,12 @@ push rax
 
 fn medusa_parse_declaration(mut pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
     let mut pairs = pair.into_inner();
-    
+
     let datatype = match pairs.next().unwrap().as_span().as_str() {
         "int" => VariableDataType::INT,
         "string" => VariableDataType::STRING,
         "float" => VariableDataType::FLOAT,
-        _ => unreachable!()
+        _ => unreachable!(),
     };
 
     // There are three options for a declaration:
@@ -797,7 +830,14 @@ fn medusa_parse_declaration(mut pair: pest::iterators::Pair<Rule>, context: &mut
         // Clone the pair and peek into it so we can grab the identifier of the variable from the input statement
         // before evaluating the input statement.
 
-        let name = pair.clone().into_inner().peek().unwrap().as_span().as_str().to_string();
+        let name = pair
+            .clone()
+            .into_inner()
+            .peek()
+            .unwrap()
+            .as_span()
+            .as_str()
+            .to_string();
 
         context.variables.insert(name.clone(), datatype);
 
@@ -808,7 +848,14 @@ fn medusa_parse_declaration(mut pair: pest::iterators::Pair<Rule>, context: &mut
         // Clone the pair and peek into it so we can grab the identifier of the variable from the input statement
         // before evaluating the input statement.
 
-        let name = pair.clone().into_inner().peek().unwrap().as_span().as_str().to_string();
+        let name = pair
+            .clone()
+            .into_inner()
+            .peek()
+            .unwrap()
+            .as_span()
+            .as_str()
+            .to_string();
 
         context.variables.insert(name.clone(), datatype);
 
@@ -823,7 +870,7 @@ fn medusa_parse_assignment(mut pair: pest::iterators::Pair<Rule>, context: &mut 
 
     let datatype = match context.variables.get(&name) {
         Some(x) => *x,
-        None => panic!("Variable does not exist for input")
+        None => panic!("Variable does not exist for input"),
     };
 
     if let Some(expression) = pairs.next() {
@@ -834,7 +881,7 @@ fn medusa_parse_assignment(mut pair: pest::iterators::Pair<Rule>, context: &mut 
         match datatype {
             VariableDataType::INT | VariableDataType::FLOAT => {
                 context.assembly_text += format!("pop qword [rel var_{}]\n", name).as_str();
-            },
+            }
             VariableDataType::STRING => {
                 let loop_index = context.label_index;
                 context.label_index += 1;
@@ -842,7 +889,8 @@ fn medusa_parse_assignment(mut pair: pest::iterators::Pair<Rule>, context: &mut 
                 let break_index = context.label_index;
                 context.label_index += 1;
 
-                context.assembly_text += format!("
+                context.assembly_text += format!(
+                    "
 ; Copy the string
 mov rcx, 0
 pop r8
@@ -858,7 +906,9 @@ inc rcx
 jmp label_{loop_index}
 
 label_{break_index}:
-").as_str();
+"
+                )
+                .as_str();
             }
         }
     };
@@ -868,7 +918,7 @@ fn medusa_parse_output(mut pair: pest::iterators::Pair<Rule>, context: &mut Comp
     let expression_pair = pair.into_inner().next().unwrap();
 
     let datatype = medusa_parse_expression(expression_pair, context);
-    
+
     /*if datatype != VariableDataType::STRING {
         panic!("Expected string for output");
     }*/
@@ -877,13 +927,13 @@ fn medusa_parse_output(mut pair: pest::iterators::Pair<Rule>, context: &mut Comp
     match datatype {
         VariableDataType::INT => {
             medusa_int_to_string(context);
-        },
+        }
         VariableDataType::FLOAT => {
             medusa_float_to_string(context);
-        },
+        }
         VariableDataType::STRING => {
             // Do nothing
-        },
+        }
     }
 
     let loop_index = context.label_index;
@@ -892,7 +942,8 @@ fn medusa_parse_output(mut pair: pest::iterators::Pair<Rule>, context: &mut Comp
     let break_index = context.label_index;
     context.label_index += 1;
 
-    context.assembly_text += format!("
+    context.assembly_text += format!(
+        "
 ; find string length
 pop rdx
 xor r8, r8
@@ -918,7 +969,9 @@ mov r8, 1
 mov r9, ignore
 call WriteFile
 add rsp, 16
-").as_str();
+"
+    )
+    .as_str();
 }
 
 fn medusa_parse_input(mut pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
@@ -926,10 +979,11 @@ fn medusa_parse_input(mut pair: pest::iterators::Pair<Rule>, context: &mut Compi
 
     let datatype = match context.variables.get(identifier) {
         Some(x) => x,
-        None => panic!("Variable does not exist for input")
+        None => panic!("Variable does not exist for input"),
     };
 
-    context.assembly_text += format!("
+    context.assembly_text += format!(
+        "
 ; Allocate a string to hold the input
 mov rcx, [rel heap_handle]
 mov rdx, 12
@@ -952,24 +1006,32 @@ add rsp, 48
 
 ; Push the string to the stack
 push r12
-").as_str();
+"
+    )
+    .as_str();
 
     // If the datatype of our variable isn't a string, convert the input accordingly before storing
     match datatype {
         VariableDataType::INT => {
             medusa_string_to_int(context);
-            context.assembly_text += format!("
+            context.assembly_text += format!(
+                "
 ; Store the input into the variable
 pop qword [rel var_{identifier}]
-").as_str();
-        },
+"
+            )
+            .as_str();
+        }
         VariableDataType::FLOAT => {
             medusa_string_to_float(context);
-            context.assembly_text += format!("
+            context.assembly_text += format!(
+                "
 ; Store the input into the variable
 pop qword [rel var_{identifier}]
-").as_str();
-        },
+"
+            )
+            .as_str();
+        }
         VariableDataType::STRING => {
             // Copy the string into the variable
             let loop_index = context.label_index;
@@ -978,7 +1040,8 @@ pop qword [rel var_{identifier}]
             let break_index = context.label_index;
             context.label_index += 1;
 
-            context.assembly_text += format!("
+            context.assembly_text += format!(
+                "
 ; Copy the string from the stack into our variable
 pop rax
 mov rcx, 0
@@ -994,50 +1057,50 @@ inc rcx
 jmp label_{loop_index}
 
 label_{break_index}:
-").as_str();
-        },
+"
+            )
+            .as_str();
+        }
     }
 
     // Store the input into the variable !!!NO!!!
     /*context.assembly_text += format!("
-; Store the input into the variable
-mov [rel var_{identifier}], rax
-").as_str();*/
-
+    ; Store the input into the variable
+    mov [rel var_{identifier}], rax
+    ").as_str();*/
 }
 
 fn medusa_parse_statement(mut pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
     match pair.as_rule() {
         Rule::declaration => {
             medusa_parse_declaration(pair, context);
-        },
+        }
         Rule::assignment => {
             medusa_parse_assignment(pair, context);
-        },
+        }
         Rule::output => {
             medusa_parse_output(pair, context);
         }
         Rule::input => {
             medusa_parse_input(pair, context);
         }
-        Rule::EOI => {},
+        Rule::EOI => {}
         _ => {
             panic!("Unexpected rule!");
         }
     };
 }
 
-pub fn compile_from_text(source_text: &str, output_file_name: String) -> Result<(), CompileError>
-{
+pub fn compile_from_text(source_text: &str, output_file_name: String) -> Result<(), CompileError> {
     let parse_result = MedusaParser::parse(Rule::program, &source_text);
 
     let file = match parse_result {
         Err(e) => {
-            return Err(CompileError{
-                body: format!("{:#?}", e)
+            return Err(CompileError {
+                body: format!("{:#?}", e),
             });
-        },
-        Ok(v) => v
+        }
+        Ok(v) => v,
     };
 
     let mut context = CompilerContext {
@@ -1050,24 +1113,26 @@ pub fn compile_from_text(source_text: &str, output_file_name: String) -> Result<
 
     for pair in file {
         medusa_parse_statement(pair, &mut context);
-    };
+    }
 
     for variable in context.variables {
         context.assembly_data += format!(
-            "var_{}: {}\n", 
-            variable.0.as_str(), 
+            "var_{}: {}\n",
+            variable.0.as_str(),
             match variable.1 {
                 VariableDataType::INT => "dq 0",
                 VariableDataType::FLOAT => "dq 0",
-                VariableDataType::STRING => "resb 1000"
+                VariableDataType::STRING => "resb 1000",
             }
-        ).as_str();
+        )
+        .as_str();
     }
 
     let assembly_text = context.assembly_text;
     let assembly_data = context.assembly_data;
 
-    let assembly_source = format!("
+    let assembly_source = format!(
+        "
 bits 64
 
 global mainCRTStartup
@@ -1134,16 +1199,18 @@ ignore dq 0
 {assembly_data}
 
 section .bss
-buffer_string resb 1024");
+buffer_string resb 1024"
+    );
 
-    fs::write(format!("{}.asm", output_file_name), assembly_source).expect("Could not write assembly source file");
+    fs::write(format!("{}.asm", output_file_name), assembly_source)
+        .expect("Could not write assembly source file");
 
     let assembler_output = Command::new("./windows/nasm.exe")
         .args([
-            "-f win64", 
-            format!("{}.asm", output_file_name).as_str(), 
-            format!("-o {}.obj", output_file_name).as_str(), 
-            format!("-l {}.lst", output_file_name).as_str()
+            "-f win64",
+            format!("{}.asm", output_file_name).as_str(),
+            format!("-o {}.obj", output_file_name).as_str(),
+            format!("-l {}.lst", output_file_name).as_str(),
         ])
         .output()
         .unwrap();
@@ -1157,20 +1224,23 @@ buffer_string resb 1024");
             } else {
                 println!("Assembler succeeded");
             }
-        },
+        }
         _ => {
-            return Err(CompileError{
-                body: format!("Assembler failed: {}", String::from_utf8(assembler_output.stderr).unwrap())
+            return Err(CompileError {
+                body: format!(
+                    "Assembler failed: {}",
+                    String::from_utf8(assembler_output.stderr).unwrap()
+                ),
             });
         }
     }
 
     let linker_output = Command::new("./windows/ld.lld.exe")
         .args([
-            format!("{}.obj", output_file_name).as_str(), 
-            format!("-o{}.exe", output_file_name).as_str(), 
-            "C:/Windows/System32/user32.dll", 
-            "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.22000.0/um/x64/kernel32.lib"
+            format!("{}.obj", output_file_name).as_str(),
+            format!("-o{}.exe", output_file_name).as_str(),
+            "C:/Windows/System32/user32.dll",
+            "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.22000.0/um/x64/kernel32.lib",
         ])
         .output()
         .unwrap();
@@ -1184,10 +1254,13 @@ buffer_string resb 1024");
             } else {
                 println!("Linker succeeded");
             }
-        },
+        }
         _ => {
-            return Err(CompileError{
-                body: format!("Linker failed: {}", String::from_utf8(linker_output.stderr).unwrap())
+            return Err(CompileError {
+                body: format!(
+                    "Linker failed: {}",
+                    String::from_utf8(linker_output.stderr).unwrap()
+                ),
             });
         }
     }
