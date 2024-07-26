@@ -3,7 +3,6 @@
 
 use std::collections::HashMap;
 use std::fs;
-use std::mem::replace;
 use std::process::Command;
 
 use pest::iterators::Pair;
@@ -447,12 +446,12 @@ push rbx
 }
 
 fn medusa_parse_expression(
-    mut pair: pest::iterators::Pair<Rule>,
+    pair: pest::iterators::Pair<Rule>,
     context: &mut CompilerContext,
 ) -> VariableDataType {
     // Convert the entire expression to postfix notation and then convert it to assembly
     // https://www.andrew.cmu.edu/course/15-200/s06/applications/ln/junk.html
-    let mut pairs = pair.into_inner();
+    let pairs = pair.into_inner();
 
     let stack_precedence_map = HashMap::from([
         (Rule::EOI, 0),
@@ -801,7 +800,7 @@ push rax
     return stack.pop().unwrap();
 }
 
-fn medusa_parse_declaration(mut pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
+fn medusa_parse_declaration(pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
     let mut pairs = pair.into_inner();
 
     let datatype = match pairs.next().unwrap().as_span().as_str() {
@@ -863,7 +862,7 @@ fn medusa_parse_declaration(mut pair: pest::iterators::Pair<Rule>, context: &mut
     }
 }
 
-fn medusa_parse_assignment(mut pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
+fn medusa_parse_assignment(pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
     let mut pairs = pair.into_inner();
 
     let name = pairs.next().unwrap().as_span().as_str().to_string();
@@ -914,7 +913,7 @@ label_{break_index}:
     };
 }
 
-fn medusa_parse_output(mut pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
+fn medusa_parse_output(pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
     let expression_pair = pair.into_inner().next().unwrap();
 
     let datatype = medusa_parse_expression(expression_pair, context);
@@ -974,7 +973,7 @@ add rsp, 16
     .as_str();
 }
 
-fn medusa_parse_input(mut pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
+fn medusa_parse_input(pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
     let identifier = pair.into_inner().next().unwrap().as_span().as_str();
 
     let datatype = match context.variables.get(identifier) {
@@ -1070,7 +1069,7 @@ label_{break_index}:
     ").as_str();*/
 }
 
-fn medusa_parse_statement(mut pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
+fn medusa_parse_statement(pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
     match pair.as_rule() {
         Rule::declaration => {
             medusa_parse_declaration(pair, context);

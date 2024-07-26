@@ -1,13 +1,13 @@
 fn main() {
     let args: Vec<String> = std::env::args().collect();
 
-    let input_file_name = if (args.len() > 1) {
+    let input_file_name = if args.len() > 1 {
         args[1].clone()
     } else {
         "input.med".to_string()
     };
 
-    let output_file_name = if (args.len() > 2) {
+    let output_file_name = if args.len() > 2 {
         args[2].clone()
     } else {
         "medusa_output".to_string()
