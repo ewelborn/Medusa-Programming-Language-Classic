@@ -83,12 +83,7 @@ push rax
 
 /// Pops an int off the stack, converts it to a float, and pushes it back onto the stack.
 fn medusa_int_to_float(context: &mut CompilerContext) {
-    context.assembly_text += format!("
-pop rax
-cvtsi2sd xmm1, rax
-movq rax, xmm1
-push rax
-").as_str();
+    print_assembly_with_context("int_to_float", context);
 }
 
 /// Pops a float off the stack, converts it to a string, and pushes it back onto the stack.
