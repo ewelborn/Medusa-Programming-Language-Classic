@@ -1,3 +1,9 @@
+; ======================================
+; int_to_string.asm
+; Convert the int (represented internally as a 64-bit signed integer) stored in RAX into a string (represented internally as a null-terminated string)
+; and return the string using RAX
+; ======================================
+
 ; Allocate space for int-to-string on the heap
 mov rcx, [rel heap_handle]
 mov rdx, 12
@@ -84,3 +90,7 @@ label_{break_index}:
 
 
 push r8
+
+; ======================================
+; End of int_to_string.asm
+; ======================================
