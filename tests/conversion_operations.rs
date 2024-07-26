@@ -15,6 +15,48 @@ fn float_to_string_1() {
 }
 
 #[test]
+fn float_to_string_2() {
+    let program = r#"
+142.125 -> @;
+"#;
+
+    let expected_output = "142.125000";
+
+    assert_eq!(
+        common::compile_and_get_stripped_output(program),
+        expected_output
+    );
+}
+
+#[test]
+fn float_to_string_3() {
+    let program = r#"
+-52.25 -> @;
+"#;
+
+    let expected_output = "-52.250000";
+
+    assert_eq!(
+        common::compile_and_get_stripped_output(program),
+        expected_output
+    );
+}
+
+#[test]
+fn float_to_string_4() {
+    let program = r#"
+0.999999 -> @;
+"#;
+
+    let expected_output = "0.999999";
+
+    assert_eq!(
+        common::compile_and_get_stripped_output(program),
+        expected_output
+    );
+}
+
+#[test]
 fn string_to_float_1() {
     let program = r#"
 float x = (float) "5.5";
