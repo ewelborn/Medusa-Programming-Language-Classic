@@ -66,7 +66,52 @@ float x = (float) "4.2abw";
 x -> @;
 "#;
 
-    let expected_output = "0";
+    let expected_output = "0.000000";
+
+    assert_eq!(
+        common::compile_and_get_stripped_output(program),
+        expected_output
+    );
+}
+
+#[test]
+fn string_to_float_5() {
+    let program = r#"
+float x = (float) "5x.29";
+x -> @;
+"#;
+
+    let expected_output = "0.000000";
+
+    assert_eq!(
+        common::compile_and_get_stripped_output(program),
+        expected_output
+    );
+}
+
+#[test]
+fn string_to_float_6() {
+    let program = r#"
+float x = (float) "123.0";
+x -> @;
+"#;
+
+    let expected_output = "123.000000";
+
+    assert_eq!(
+        common::compile_and_get_stripped_output(program),
+        expected_output
+    );
+}
+
+#[test]
+fn string_to_float_7() {
+    let program = r#"
+float x = (float) "0.564";
+x -> @;
+"#;
+
+    let expected_output = "0.564000";
 
     assert_eq!(
         common::compile_and_get_stripped_output(program),
