@@ -222,3 +222,34 @@ x -> @;
         expected_output
     );
 }
+
+#[test]
+fn string_to_int_4() {
+    let program = r#"
+int x = (int) "+742";
+x -> @;
+"#;
+
+    let expected_output = "742";
+
+    assert_eq!(
+        common::compile_and_get_stripped_output(program, function_name!()),
+        expected_output
+    );
+}
+
+#[test]
+fn string_to_int_5() {
+    // Making sure that the internal representation is i64-compatible
+    let program = r#"
+int x = (int) "2147483650";
+x -> @;
+"#;
+
+    let expected_output = "2147483650";
+
+    assert_eq!(
+        common::compile_and_get_stripped_output(program, function_name!()),
+        expected_output
+    );
+}
