@@ -732,38 +732,12 @@ add rsp, 16
 fn medusa_parse_input(pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
     let identifier = pair.into_inner().next().unwrap().as_span().as_str();
 
+    print_assembly_with_context("input", context);
+
     let datatype = match context.variables.get(identifier) {
         Some(x) => x,
         None => panic!("Variable does not exist for input"),
     };
-
-    context.assembly_text += format!(
-        "
-; Allocate a string to hold the input
-mov rcx, [rel heap_handle]
-mov rdx, 12
-mov r8, 256
-sub rsp, 32
-call HeapAlloc
-add rsp, 32
-
-; String pointer stored in RAX assuming no errors - back it up in R12
-mov r12, rax
-
-; Read the input from the user
-mov rcx, [rel input_handle]
-mov rdx, rax
-mov r8, 255
-lea r9, [rel ignore]
-sub rsp, 48
-call ReadFile
-add rsp, 48
-
-; Push the string to the stack
-push r12
-"
-    )
-    .as_str();
 
     // If the datatype of our variable isn't a string, convert the input accordingly before storing
     match datatype {
