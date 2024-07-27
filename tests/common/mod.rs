@@ -13,7 +13,9 @@ pub fn compile_and_get_output(source_text: &str, test_name: &str) -> String {
     medusa_lang::compile_from_text(source_text, &test_name).unwrap();
 
     // File is available at test.exe
-    let output = std::process::Command::new(format!("./{test_name}.exe")).output().unwrap();
+    let output = std::process::Command::new(format!("./{test_name}.exe"))
+        .output()
+        .unwrap();
 
     // Destroy the .exe, .asm, .obj, and .lst now that we're done with them
     std::fs::remove_file(format!("{test_name}.exe")).unwrap();
