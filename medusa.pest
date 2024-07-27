@@ -4,14 +4,14 @@ statement_block = _{ newline_or_comment* ~ (statement ~ newline_or_comment*)* }
 newline_or_comment = _{ NEWLINE | comment }
 comment = _{ ("//" ~ (!(NEWLINE) ~ ANY)* ~ (NEWLINE | EOI)) | ("/*" ~ ANY* ~ "*/") }
 
-statement = _{ (declaration | assignment | input | output | if) ~ ";" }
+statement = _{ (declaration | assignment | input | output | if_) ~ ";" }
 
 declaration = { dataType ~ (input | assignment | identifier) }
 assignment = {identifier ~ "=" ~ expression}
 output = {(expression ~ "->" ~ "@")}
 input = {(identifier ~ "<-" ~ "@")}
-if = { "if" ~ "(" ~ expression ~ conditional_operator ~ expression ~ ")" ~ "{" ~ statement_block ~ "}" ~ else? }
-else = { "else" ~ "{" ~ statement_block ~ "}" }
+if_ = { "if" ~ "(" ~ expression ~ conditional_operator ~ expression ~ ")" ~ "{" ~ statement_block ~ "}" ~ else_? }
+else_ = { "else" ~ "{" ~ statement_block ~ "}" }
 
 // https://docs.rs/pest/latest/pest/pratt_parser/struct.PrattParser.html
 expression = { prefix* ~ primary ~ (infix ~ prefix* ~ primary)* }
