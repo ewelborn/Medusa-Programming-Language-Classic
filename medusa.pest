@@ -1,6 +1,6 @@
 program = _{ SOI ~ statement_block ~ EOI }
 
-statement_block = { newline_or_comment* ~ (statement ~ newline_or_comment*)* }
+statement_block = _{ newline_or_comment* ~ (statement ~ newline_or_comment*)* }
 newline_or_comment = _{ NEWLINE | comment }
 comment = _{ ("//" ~ (!(NEWLINE) ~ ANY)* ~ (NEWLINE | EOI)) | ("/*" ~ ANY* ~ "*/") }
 
