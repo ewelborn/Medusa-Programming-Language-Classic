@@ -24,8 +24,42 @@ sub rsp, 48
 call ReadFile
 add rsp, 48
 
+; Restore the string
+mov rax, r12
+
+; Loop through the string and see if we find a carriage return or newline character - if we do,
+; then replace it with a null terminator.
+
+; RCX will be our index into the string
+xor rcx, rcx
+
+; R8 will be the current character
+xor r8, r8
+
+label_{string_loop}:
+
+mov r8b, [rax + rcx]
+
+; Is the character a null terminator? Time to stop.
+cmp r8, 0
+je label_{string_break}
+
+; Is the character a carriage return or newline character? If so, replace it and stop looping.
+cmp r8, 13 ; ASCII code for carriage return
+je label_{replace_and_break}
+cmp r8, 10 ; ASCII code for newline character
+je label_{replace_and_break}
+
+inc rcx
+jmp label_{string_loop}
+
+label_{replace_and_break}:
+mov byte [rax + rcx], 0
+
+label_{string_break}:
+
 ; Push the string to the stack
-push r12
+push rax
 
 ; ======================================
 ; End of input.asm
