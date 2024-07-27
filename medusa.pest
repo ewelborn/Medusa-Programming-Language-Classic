@@ -1,14 +1,17 @@
-program = _{ SOI ~ newline_or_comment* ~ (statement ~ newline_or_comment*)* ~ EOI }
+program = _{ SOI ~ statement_block ~ EOI }
 
-newline_or_comment = _{NEWLINE | comment}
+statement_block = { newline_or_comment* ~ (statement ~ newline_or_comment*)* }
+newline_or_comment = _{ NEWLINE | comment }
 comment = _{ ("//" ~ (!(NEWLINE) ~ ANY)* ~ (NEWLINE | EOI)) | ("/*" ~ ANY* ~ "*/") }
 
-statement = _{ (declaration | assignment | input | output) ~ ";" }
+statement = _{ (declaration | assignment | input | output | if) ~ ";" }
 
 declaration = { dataType ~ (input | assignment | identifier) }
 assignment = {identifier ~ "=" ~ expression}
 output = {(expression ~ "->" ~ "@")}
 input = {(identifier ~ "<-" ~ "@")}
+if = { "if" ~ "(" ~ expression ~ conditional_operator ~ expression ~ ")" ~ "{" ~ statement_block ~ "}" ~ else? }
+else = { "else" ~ "{" ~ statement_block ~ "}" }
 
 // https://docs.rs/pest/latest/pest/pratt_parser/struct.PrattParser.html
 expression = { prefix* ~ primary ~ (infix ~ prefix* ~ primary)* }
@@ -29,6 +32,8 @@ divide      = { "/" }
 modulo      = { "%" }
 power       = { "^" }
 concatenate = { ".." }
+
+conditional_operator = { ">" | "<" | ">=" | "<=" | "==" | "!=" }
 
 identifier = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC)* }
 dataType   =  { "int" | "float" | "string" }
