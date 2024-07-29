@@ -5,8 +5,23 @@
 //"Nice! Your favorite number multiplied by 5 is..." -> @;
 //a * 5 -> @;
 
-float x <- @;
-x -> @;
-float z = x * 2.5;
-z - 0.05 -> @;
-(int) z -> @;
+int x <- @;
+
+if (x > 5) {
+    "x is greater than 5!" -> @;
+
+    if (x == 24) {
+        "What a lucky day :)" -> @;
+        5.45 -> @;
+    };
+} else {
+    "x is NOT greater than 5 :(" -> @;
+};
+
+if (x == 5) {
+    "x equals 5" -> @;
+};
+
+if (x < 5) {
+    "x is less than 5" -> @;
+};

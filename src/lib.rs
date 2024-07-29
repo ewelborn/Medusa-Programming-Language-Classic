@@ -715,6 +715,161 @@ label_{break_index}:
     ").as_str();*/
 }
 
+fn medusa_parse_if(pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
+    let mut pairs = pair.into_inner();
+
+    let left_expression_pair = pairs.next().unwrap();
+    let conditional_operator_pair = pairs.next().unwrap();
+    let right_expression_pair = pairs.next().unwrap();
+
+    let left_datatype = medusa_parse_expression(left_expression_pair, context);
+    let right_datatype = medusa_parse_expression(right_expression_pair, context);
+
+    if left_datatype != right_datatype {
+        panic!("Datatypes in if statement do not match!");
+    }
+
+    // The result of the right expression is on top of the stack, and the result of the left expression is just below it
+    // Let's store left in RAX and right in RBX
+    context.assembly_text += "pop rbx\npop rax\n";
+
+    let conditional_operator = conditional_operator_pair.as_span().as_str();
+
+    let skip_if_statement_label = context.label_index;
+    context.label_index += 1;
+
+    match conditional_operator {
+        ">" => match left_datatype {
+            VariableDataType::INT => {
+                context.assembly_text +=
+                    &format!("cmp rax, rbx\njle label_{skip_if_statement_label}\n")
+            }
+            VariableDataType::FLOAT => {
+                todo!()
+            }
+            VariableDataType::STRING => {
+                panic!("Cannot compare strings with >");
+            }
+        },
+        "<" => match left_datatype {
+            VariableDataType::INT => {
+                context.assembly_text +=
+                    &format!("cmp rax, rbx\njge label_{skip_if_statement_label}\n")
+            }
+            VariableDataType::FLOAT => {
+                todo!()
+            }
+            VariableDataType::STRING => {
+                panic!("Cannot compare strings with <");
+            }
+        },
+        ">=" => match left_datatype {
+            VariableDataType::INT => {
+                context.assembly_text +=
+                    &format!("cmp rax, rbx\njl label_{skip_if_statement_label}\n")
+            }
+            VariableDataType::FLOAT => {
+                todo!()
+            }
+            VariableDataType::STRING => {
+                panic!("Cannot compare strings with >=");
+            }
+        },
+        "<=" => match left_datatype {
+            VariableDataType::INT => {
+                context.assembly_text +=
+                    &format!("cmp rax, rbx\njg label_{skip_if_statement_label}\n")
+            }
+            VariableDataType::FLOAT => {
+                todo!()
+            }
+            VariableDataType::STRING => {
+                panic!("Cannot compare strings with <=");
+            }
+        },
+        "==" => match left_datatype {
+            VariableDataType::INT => {
+                context.assembly_text +=
+                    &format!("cmp rax, rbx\njne label_{skip_if_statement_label}\n")
+            }
+            VariableDataType::FLOAT => {
+                todo!()
+            }
+            VariableDataType::STRING => {
+                todo!()
+            }
+        },
+        "!=" => match left_datatype {
+            VariableDataType::INT => {
+                context.assembly_text +=
+                    &format!("cmp rax, rbx\nje label_{skip_if_statement_label}\n")
+            }
+            VariableDataType::FLOAT => {
+                todo!()
+            }
+            VariableDataType::STRING => {
+                todo!()
+            }
+        },
+        _ => {
+            unreachable!();
+        }
+    }
+
+    let mut else_statement: Option<Pair<Rule>> = None;
+
+    // Print all of the code inside the if statement
+    loop {
+        match pairs.next() {
+            Some(pair) => {
+                if pair.as_rule() == Rule::else_ {
+                    else_statement = Some(pair);
+                    break;
+                } else {
+                    medusa_parse_statement(pair, context);
+                }
+            }
+            None => {
+                break;
+            }
+        }
+    }
+
+    match else_statement {
+        Some(else_statement) => {
+            // This if statement has an else statement tagging along with it
+
+            let skip_else_statement_label = context.label_index;
+            context.label_index += 1;
+
+            // The instructions are ordered in this way so that, if the if statement is true,
+            // it will hit the jump and skip all of the else statement code
+            context.assembly_text += &format!("\njmp label_{skip_else_statement_label}\n");
+            context.assembly_text += &format!("\nlabel_{skip_if_statement_label}:\n");
+
+            // Print all of the code inside the else statement
+            let mut else_statement_pairs = else_statement.into_inner();
+            loop {
+                match else_statement_pairs.next() {
+                    Some(pair) => {
+                        medusa_parse_statement(pair, context);
+                    }
+                    None => {
+                        break;
+                    }
+                }
+            }
+
+            context.assembly_text += &format!("\nlabel_{skip_else_statement_label}:\n");
+        }
+        None => {
+            // Just a normal if statement - emit the ending label
+
+            context.assembly_text += &format!("\nlabel_{skip_if_statement_label}:\n");
+        }
+    }
+}
+
 fn medusa_parse_statement(pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
     match pair.as_rule() {
         Rule::declaration => {
@@ -728,6 +883,9 @@ fn medusa_parse_statement(pair: pest::iterators::Pair<Rule>, context: &mut Compi
         }
         Rule::input => {
             medusa_parse_input(pair, context);
+        }
+        Rule::if_ => {
+            medusa_parse_if(pair, context);
         }
         Rule::EOI => {}
         _ => {
