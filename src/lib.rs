@@ -8,6 +8,8 @@ use std::process::Command;
 use pest::iterators::Pair;
 use pest::Parser;
 use pest_derive::Parser;
+use winreg::enums::HKEY_LOCAL_MACHINE;
+use winreg::RegKey;
 
 #[derive(Parser)]
 #[grammar = "medusa.pest"]
@@ -1101,12 +1103,77 @@ buffer_string resb 1024"
         }
     }
 
+    // Dig through the registry keys to find the exact folder path to the Windows SDK - this is
+    // necessary to link against kernel32.lib
+
+    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+    let sdk = match hklm
+        .open_subkey("SOFTWARE\\WOW6432Node\\Microsoft\\Microsoft SDKs\\Windows\\v10.0")
+    {
+        Ok(v) => v,
+        Err(_e) => {
+            return Err(CompileError {
+                body: "Could not locate registry key for Windows SDK version. Is the Windows SDK installed?".to_string()
+            });
+        }
+    };
+
+    let sdk_installation_folder: String = match sdk.get_value("InstallationFolder") {
+        Ok(v) => v,
+        Err(_e) => {
+            return Err(CompileError {
+                body: "Could not locate registry key for Windows SDK installation folder. Is the Windows SDK installed?".to_string()
+            });
+        }
+    };
+
+    let sdk_installation_version: String = match sdk.get_value("ProductVersion") {
+        Ok(v) => v,
+        Err(_e) => {
+            return Err(CompileError {
+                body: "Could not locate registry key for Windows SDK installation version. Is the Windows SDK installed?".to_string()
+            });
+        }
+    };
+
+    // We need to find the exact path to the Windows SDK - this is made difficult because the product version
+    // does not line up directly with the actual folder name, ex. the product version on my machine is
+    // 10.0.22000 while the folder path is 10.0.22000.0.
+    let paths = fs::read_dir(format!("{sdk_installation_folder}Lib\\")).unwrap();
+
+    let mut kernel32_path: Option<String> = None;
+
+    for path in paths {
+        // Strip the path down to just the folder number, ex. 10.0.22000.0
+        let path = path.unwrap().path();
+        let path = path.strip_prefix(format!("{sdk_installation_folder}Lib\\")).unwrap();
+
+        // Compare it to the product version and see if everything but the last digits line up
+        
+        let folder_number = path.to_str().unwrap();
+
+        // Trim the folder number so that it's the same length as the product version before comparing
+        if folder_number[..sdk_installation_version.len()] == sdk_installation_version {
+            kernel32_path = Some(format!("{sdk_installation_folder}Lib\\{folder_number}\\um\\x64\\kernel32.lib"));
+        }
+    }
+
+    let kernel32_path = match kernel32_path {
+        Some(path) => path,
+        None => {
+            return Err(CompileError {
+                body: format!("Could not locate the Windows SDK folder at {sdk_installation_folder}Lib\\{sdk_installation_version}. Is the Windows SDK installed correctly?")
+            });
+        }
+    };
+
     let linker_output = Command::new("./windows/ld.lld.exe")
         .args([
             format!("{}.obj", output_file_name).as_str(),
             format!("-o{}.exe", output_file_name).as_str(),
             "C:/Windows/System32/user32.dll",
-            "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.22000.0/um/x64/kernel32.lib",
+            &kernel32_path,
+            //"C:/Program Files (x86)/Windows Kits/10/Lib/10.0.22000.0/um/x64/kernel32.lib",
         ])
         .output()
         .unwrap();
