@@ -715,7 +715,7 @@ label_{break_index}:
     ").as_str();*/
 }
 
-fn medusa_parse_if(pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
+fn medusa_parse_condition(pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext, jump_if_false_label_index: u64) {
     let mut pairs = pair.into_inner();
 
     let left_expression_pair = pairs.next().unwrap();
@@ -735,14 +735,11 @@ fn medusa_parse_if(pair: pest::iterators::Pair<Rule>, context: &mut CompilerCont
 
     let conditional_operator = conditional_operator_pair.as_span().as_str();
 
-    let skip_if_statement_label = context.label_index;
-    context.label_index += 1;
-
     match conditional_operator {
         ">" => match left_datatype {
             VariableDataType::INT => {
                 context.assembly_text +=
-                    &format!("cmp rax, rbx\njle label_{skip_if_statement_label}\n")
+                    &format!("cmp rax, rbx\njle label_{jump_if_false_label_index}\n")
             }
             VariableDataType::FLOAT => {
                 todo!()
@@ -754,7 +751,7 @@ fn medusa_parse_if(pair: pest::iterators::Pair<Rule>, context: &mut CompilerCont
         "<" => match left_datatype {
             VariableDataType::INT => {
                 context.assembly_text +=
-                    &format!("cmp rax, rbx\njge label_{skip_if_statement_label}\n")
+                    &format!("cmp rax, rbx\njge label_{jump_if_false_label_index}\n")
             }
             VariableDataType::FLOAT => {
                 todo!()
@@ -766,7 +763,7 @@ fn medusa_parse_if(pair: pest::iterators::Pair<Rule>, context: &mut CompilerCont
         ">=" => match left_datatype {
             VariableDataType::INT => {
                 context.assembly_text +=
-                    &format!("cmp rax, rbx\njl label_{skip_if_statement_label}\n")
+                    &format!("cmp rax, rbx\njl label_{jump_if_false_label_index}\n")
             }
             VariableDataType::FLOAT => {
                 todo!()
@@ -778,7 +775,7 @@ fn medusa_parse_if(pair: pest::iterators::Pair<Rule>, context: &mut CompilerCont
         "<=" => match left_datatype {
             VariableDataType::INT => {
                 context.assembly_text +=
-                    &format!("cmp rax, rbx\njg label_{skip_if_statement_label}\n")
+                    &format!("cmp rax, rbx\njg label_{jump_if_false_label_index}\n")
             }
             VariableDataType::FLOAT => {
                 todo!()
@@ -790,7 +787,7 @@ fn medusa_parse_if(pair: pest::iterators::Pair<Rule>, context: &mut CompilerCont
         "==" => match left_datatype {
             VariableDataType::INT => {
                 context.assembly_text +=
-                    &format!("cmp rax, rbx\njne label_{skip_if_statement_label}\n")
+                    &format!("cmp rax, rbx\njne label_{jump_if_false_label_index}\n")
             }
             VariableDataType::FLOAT => {
                 todo!()
@@ -802,7 +799,7 @@ fn medusa_parse_if(pair: pest::iterators::Pair<Rule>, context: &mut CompilerCont
         "!=" => match left_datatype {
             VariableDataType::INT => {
                 context.assembly_text +=
-                    &format!("cmp rax, rbx\nje label_{skip_if_statement_label}\n")
+                    &format!("cmp rax, rbx\nje label_{jump_if_false_label_index}\n")
             }
             VariableDataType::FLOAT => {
                 todo!()
@@ -815,6 +812,16 @@ fn medusa_parse_if(pair: pest::iterators::Pair<Rule>, context: &mut CompilerCont
             unreachable!();
         }
     }
+}
+
+fn medusa_parse_if(pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
+    let mut pairs = pair.into_inner();
+
+    let skip_if_statement_label = context.label_index;
+    context.label_index += 1;
+
+    let condition_pair = pairs.next().unwrap();
+    medusa_parse_condition(condition_pair, context, skip_if_statement_label);
 
     let mut else_statement: Option<Pair<Rule>> = None;
 
@@ -870,6 +877,10 @@ fn medusa_parse_if(pair: pest::iterators::Pair<Rule>, context: &mut CompilerCont
     }
 }
 
+fn medusa_parse_forloop(pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
+    todo!();
+}
+
 fn medusa_parse_statement(pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
     match pair.as_rule() {
         Rule::declaration => {
@@ -886,6 +897,9 @@ fn medusa_parse_statement(pair: pest::iterators::Pair<Rule>, context: &mut Compi
         }
         Rule::if_ => {
             medusa_parse_if(pair, context);
+        }
+        Rule::forloop => {
+            medusa_parse_forloop(pair, context);
         }
         Rule::EOI => {}
         _ => {
