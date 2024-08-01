@@ -715,7 +715,11 @@ label_{break_index}:
     ").as_str();*/
 }
 
-fn medusa_parse_condition(pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext, jump_if_false_label_index: u64) {
+fn medusa_parse_condition(
+    pair: pest::iterators::Pair<Rule>,
+    context: &mut CompilerContext,
+    jump_if_false_label_index: u64,
+) {
     let mut pairs = pair.into_inner();
 
     let left_expression_pair = pairs.next().unwrap();
@@ -878,7 +882,52 @@ fn medusa_parse_if(pair: pest::iterators::Pair<Rule>, context: &mut CompilerCont
 }
 
 fn medusa_parse_forloop(pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
-    todo!();
+    let mut pairs = pair.into_inner();
+
+    let first_pair = pairs.next().unwrap();
+
+    match first_pair.as_rule() {
+        Rule::declaration => medusa_parse_declaration(first_pair, context),
+        Rule::assignment => medusa_parse_assignment(first_pair, context),
+        Rule::identifier => {
+            // Do absolutely nothing, because this language is weird >:(
+        }
+        _ => unreachable!(),
+    }
+
+    let condition_pair = pairs.next().unwrap();
+
+    let assignment_pair = pairs.next().unwrap();
+
+    let loop_label = context.label_index;
+    context.label_index += 1;
+
+    let break_loop_label = context.label_index;
+    context.label_index += 1;
+
+    // This is the top of the loop, emit our label here
+    context.assembly_text += &format!("\nlabel_{loop_label}:\n");
+
+    // Check the condition - if it's true, break the loop, otherwise, continue
+    medusa_parse_condition(condition_pair, context, break_loop_label);
+
+    // Print all of the code inside the loop body
+    loop {
+        match pairs.next() {
+            Some(pair) => {
+                medusa_parse_statement(pair, context);
+            }
+            None => {
+                break;
+            }
+        }
+    }
+
+    // Run the assignment at the end of the loop, then jump back to the top
+    medusa_parse_assignment(assignment_pair, context);
+    context.assembly_text += &format!("\njmp label_{loop_label}\n");
+
+    context.assembly_text += &format!("label_{break_loop_label}:\n");
 }
 
 fn medusa_parse_statement(pair: pest::iterators::Pair<Rule>, context: &mut CompilerContext) {
