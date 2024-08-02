@@ -1,0 +1,42 @@
+// Chosen by fair dice roll.
+// Guaranteed to be random.
+int randomNumber = 4;
+
+// To output data to the user, just point it (->) towards the IO portal (@)
+"I'm thinking of a number between 1 and 100. Can you guess it?" -> @;
+
+// This is necessary because for loops are the only kind of loops supported by Medusa -
+// the more correct solution in most other languages would be to use a while loop
+for (int finished = 0; finished == 0; finished = finished) {
+
+    // There is no local scope in Medusa, so any variables declared in this block are
+    // global, and can be viewed and changed anywhere in the program.
+
+    // To get input from the user, again, just point (<-) from the IO portal (@)
+    int guess <- @;
+
+    // Else statements are supported, but not else if statements. You can make it work,
+    // but it'll be obnoxious and tedious.
+    if (guess == randomNumber) {
+
+        // String concatenation requires the concatenation operator (..), and only works
+        // with strings - this is why random_number needs to be typecast first.
+        "You did it! The number was " .. (string) randomNumber .. "!" -> @;
+
+        finished = 1;
+
+    // If statements must end with a semicolon in Medusa
+    };
+
+    if (guess < randomNumber) {
+        "Hmm.. nope, guess higher!" -> @;
+    };
+
+    if (guess > randomNumber) {
+        "Hmm.. nope, guess lower!" -> @;
+    };
+
+// For loops must also end with a semicolon in Medusa
+};
+
+"Well, that was fun - let's play again another day :)" -> @;
