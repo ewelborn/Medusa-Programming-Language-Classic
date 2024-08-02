@@ -8,12 +8,17 @@ use std::process::Command;
 use pest::iterators::Pair;
 use pest::Parser;
 use pest_derive::Parser;
+use rust_embed::Embed;
 use winreg::enums::HKEY_LOCAL_MACHINE;
 use winreg::RegKey;
 
 #[derive(Parser)]
 #[grammar = "medusa.pest"]
 pub struct MedusaParser;
+
+#[derive(Embed)]
+#[folder = "src/assembly/"]
+struct Assembly;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum VariableDataType {
@@ -42,8 +47,13 @@ impl std::fmt::Display for CompileError {
 }
 
 fn print_assembly_with_context(file_name: &str, context: &mut CompilerContext) {
-    let source_text = std::fs::read_to_string(format!("./src/assembly/{file_name}.asm"))
-        .expect(format!("Could not read assembly file {}", file_name).as_str());
+    //let source_text = std::fs::read_to_string(format!("./src/assembly/{file_name}.asm"))
+    //    .expect(format!("Could not read assembly file {}", file_name).as_str());
+
+    let data = Assembly::get(&format!("{file_name}.asm"))
+        .unwrap()
+        .data;
+    let source_text = std::str::from_utf8(data.as_ref()).unwrap();
 
     let label_matcher = regex::Regex::new(r"[^\{]\{(?<label>[^\{\}]+)\}[^\}]").unwrap();
 
@@ -1146,15 +1156,19 @@ buffer_string resb 1024"
     for path in paths {
         // Strip the path down to just the folder number, ex. 10.0.22000.0
         let path = path.unwrap().path();
-        let path = path.strip_prefix(format!("{sdk_installation_folder}Lib\\")).unwrap();
+        let path = path
+            .strip_prefix(format!("{sdk_installation_folder}Lib\\"))
+            .unwrap();
 
         // Compare it to the product version and see if everything but the last digits line up
-        
+
         let folder_number = path.to_str().unwrap();
 
         // Trim the folder number so that it's the same length as the product version before comparing
         if folder_number[..sdk_installation_version.len()] == sdk_installation_version {
-            kernel32_path = Some(format!("{sdk_installation_folder}Lib\\{folder_number}\\um\\x64\\kernel32.lib"));
+            kernel32_path = Some(format!(
+                "{sdk_installation_folder}Lib\\{folder_number}\\um\\x64\\kernel32.lib"
+            ));
         }
     }
 

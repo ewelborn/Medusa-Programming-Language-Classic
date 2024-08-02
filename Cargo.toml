@@ -9,6 +9,7 @@ edition = "2021"
 pest = "2.7.6"
 pest_derive = "2.7.6"
 regex = "1.10.5"
+rust-embed = "8.5.0"
 stdext = "0.3.3"
 winreg = "0.52.0"
 
