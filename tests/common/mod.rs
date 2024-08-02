@@ -37,7 +37,8 @@ pub fn compile_and_get_output(source_text: &str, test_name: &str) -> String {
 pub fn compile_and_get_stripped_output(source_text: &str, test_name: &str) -> String {
     let output = compile_and_get_output(source_text, test_name);
 
-    let header = regex::Regex::new(r"Medusa 1.0").unwrap();
+    let medusa_version = env!("CARGO_PKG_VERSION");
+    let header = regex::Regex::new(format!("Medusa {medusa_version}").as_str()).unwrap();
     let footer = regex::Regex::new(r"Program ended").unwrap();
     let formatting_characters = regex::Regex::new(r"(\n|\u{0})").unwrap();
 

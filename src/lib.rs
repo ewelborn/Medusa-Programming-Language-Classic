@@ -1009,6 +1009,8 @@ pub fn compile_from_text(source_text: &str, output_file_name: &str) -> Result<()
     let assembly_text = context.assembly_text;
     let assembly_data = context.assembly_data;
 
+    let medusa_version = env!("CARGO_PKG_VERSION");
+
     let assembly_source = format!(
         "
 bits 64
@@ -1068,7 +1070,7 @@ section .data
 input_handle dq 0
 output_handle dq 0
 heap_handle dq 0
-medusa_string db \"Medusa 1.0\", 10, 0
+medusa_string db \"Medusa {medusa_version}\", 10, 0
 medusa_string_length equ $-medusa_string
 program_ended_string db \"Program ended\", 10, 0
 program_ended_string_length equ $-program_ended_string
