@@ -47,12 +47,9 @@ impl std::fmt::Display for CompileError {
 }
 
 fn print_assembly_with_context(file_name: &str, context: &mut CompilerContext) {
-    //let source_text = std::fs::read_to_string(format!("./src/assembly/{file_name}.asm"))
-    //    .expect(format!("Could not read assembly file {}", file_name).as_str());
-
-    let data = Assembly::get(&format!("{file_name}.asm"))
-        .unwrap()
-        .data;
+    // We're using Rust embed to store the assembly files directly in the .exe - these files
+    // can be located in src/assembly/ before compilation.
+    let data = Assembly::get(&format!("{file_name}.asm")).unwrap().data;
     let source_text = std::str::from_utf8(data.as_ref()).unwrap();
 
     let label_matcher = regex::Regex::new(r"[^\{]\{(?<label>[^\{\}]+)\}[^\}]").unwrap();
@@ -144,7 +141,8 @@ fn medusa_parse_expression(
         (Rule::multiply, 4),
         (Rule::divide, 4),
         (Rule::modulo, 4),
-        (Rule::cast, 6),
+        (Rule::concatenate, 6),
+        (Rule::cast, 8),
         (Rule::expression, 51),
     ]);
 
@@ -154,7 +152,8 @@ fn medusa_parse_expression(
         (Rule::multiply, 3),
         (Rule::divide, 3),
         (Rule::modulo, 3),
-        (Rule::cast, 5),
+        (Rule::concatenate, 5),
+        (Rule::cast, 7),
         (Rule::expression, 50),
     ]);
 
@@ -171,6 +170,7 @@ fn medusa_parse_expression(
             | Rule::multiply
             | Rule::divide
             | Rule::modulo
+            | Rule::concatenate
             | Rule::cast
             | Rule::expression => {
                 loop {
@@ -329,6 +329,16 @@ push rax
                     panic!("Math operation on non-number");
                 }
             }
+            Rule::concatenate => {
+                let left_operand = stack[stack.len() - 2];
+                let right_operand = stack[stack.len() - 1];
+
+                if left_operand != VariableDataType::STRING
+                    || right_operand != VariableDataType::STRING
+                {
+                    panic!("Concatenation on non-string");
+                }
+            }
             _ => {}
         }
 
@@ -430,6 +440,15 @@ push rax
                 }
 
                 stack.push(datatype);
+            }
+            Rule::concatenate => {
+                // Pop the top two strings off the stack
+                stack.pop();
+                stack.pop();
+
+                print_assembly_with_context("concatenate_strings", context);
+
+                stack.push(VariableDataType::STRING);
             }
             Rule::cast => 'cast: {
                 let from_datatype = stack.pop().unwrap();
