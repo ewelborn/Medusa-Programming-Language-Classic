@@ -142,6 +142,7 @@ fn medusa_parse_expression(
         (Rule::divide, 4),
         (Rule::modulo, 4),
         (Rule::concatenate, 6),
+        (Rule::power, 6),
         (Rule::cast, 8),
         (Rule::expression, 51),
     ]);
@@ -153,6 +154,7 @@ fn medusa_parse_expression(
         (Rule::divide, 3),
         (Rule::modulo, 3),
         (Rule::concatenate, 5),
+        (Rule::power, 5),
         (Rule::cast, 7),
         (Rule::expression, 50),
     ]);
@@ -171,6 +173,7 @@ fn medusa_parse_expression(
             | Rule::divide
             | Rule::modulo
             | Rule::concatenate
+            | Rule::power
             | Rule::cast
             | Rule::expression => {
                 loop {
@@ -449,6 +452,20 @@ push rax
                 print_assembly_with_context("concatenate_strings", context);
 
                 stack.push(VariableDataType::STRING);
+            }
+            Rule::power => {
+                // Pop the top two strings off the stack
+                stack.pop();
+                let datatype = stack.pop().unwrap();
+
+                if datatype == VariableDataType::INT {
+                    print_assembly_with_context("compute_integer_power", context);
+                    stack.push(VariableDataType::INT);
+                } else {
+                    todo!();
+                    print_assembly_with_context("compute_float_power", context);
+                    stack.push(VariableDataType::FLOAT);
+                }
             }
             Rule::cast => 'cast: {
                 let from_datatype = stack.pop().unwrap();

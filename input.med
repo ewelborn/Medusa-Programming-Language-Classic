@@ -5,19 +5,7 @@
 //"Nice! Your favorite number multiplied by 5 is..." -> @;
 //a * 5 -> @;
 
-string a = "oh the less ";
-a = a .. "I know the better";
+int x <- @;
+int y <- @;
 
-a -> @;
-
-string s = "";
-
-for (int x = 4; x > 0; x = x - 1) {
-    x -> @;
-    s = s .. (string) x .. " ";
-    if (x == 2) {
-        "YEAAAH!!" -> @;
-    };
-};
-
-s -> @;
+x ^ y -> @;
