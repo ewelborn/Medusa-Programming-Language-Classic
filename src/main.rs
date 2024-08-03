@@ -1,16 +1,20 @@
 fn main() {
     let args: Vec<String> = std::env::args().collect();
 
+    //println!("{}", args[0]);
+
     let input_file_name = if args.len() > 1 {
         args[1].clone()
     } else {
-        "input.med".to_string()
+        panic!("No source file was provided. Pass in a file path as the first argument to the program.")
     };
 
     let output_file_name = if args.len() > 2 {
         args[2].clone()
     } else {
-        "medusa_output".to_string()
+        // If no output file name was provided, use the same name as the source file, but strip off the
+        // file extension (if it exists) (TODO)
+        args[1].clone()
     };
 
     let source_text = std::fs::read_to_string(input_file_name.clone())
